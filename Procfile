@@ -1,0 +1,1 @@
+worker: python3 billbot2.py
