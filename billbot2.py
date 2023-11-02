@@ -17,8 +17,10 @@ def now():
     return datetime.now(tz=pytz.timezone('US/Eastern'))
 
 
-@bot.command()
+@bot.hybrid_command()
 async def bill(ctx: Context):
+    # kevin: 498870829095059476
+    # bill: 99631940310663168
     bill = await ctx.guild.fetch_member(99631940310663168)
     async for msg in ctx.channel.history(limit=10_000):
         if msg.author == bill and ("https://store.steampowered.com" in msg.content or "http://store.steampowered.com" in msg.content):
