@@ -1,1 +1,1 @@
-worker: python3 billbot2.py
+worker: python3 billbot.py

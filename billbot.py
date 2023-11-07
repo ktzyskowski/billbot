@@ -4,34 +4,59 @@ import os
 import json
 import requests as re
 from bs4 import BeautifulSoup as bs
+from discord import Message
 from discord.ext import commands
 from discord.ext.commands import Context
 from datetime import datetime
+from dateutil import parser
+
+from config import user_ids
+from repo import Repository
 
 intents = discord.Intents.default()
 intents.message_content = True
 
+repo = Repository(dbpath='db.json')
 bot = commands.Bot(command_prefix='$', intents=intents)
 bot.activity = discord.Activity(
-    type=discord.ActivityType.listening, name="Checking the last time $bill sent a new game")
+    type=discord.ActivityType.listening,
+    name="to $bill et. al.")
 
 
 def now():
+    """Return the current datetime for the EST timezone."""
     return datetime.now(tz=pytz.timezone('US/Eastern'))
+
+
+@bot.event
+async def on_message(msg: Message):
+
+    # check if the message is a recommendation from bill
+    #   ... if it is, store it!
+    if msg.author.id == user_ids['kevin']:
+        if ("http://store.steampowered.com" in msg.content) or\
+                ("https://store.steampowered.com" in msg.content):
+            repo.put('bill', {
+                'created_at': msg.created_at.isoformat(),
+                'channel': msg.channel.mention,
+                'jump_url': msg.jump_url
+            })
 
 
 @bot.hybrid_command()
 async def bill(ctx: Context):
-    # kevin: 498870829095059476
-    # bill: 99631940310663168
-    bill = await ctx.guild.fetch_member(99631940310663168)
-    async for msg in ctx.channel.history(limit=10_000):
-        if msg.author == bill and ("https://store.steampowered.com" in msg.content or "http://store.steampowered.com" in msg.content):
-            days = (now() - msg.created_at).days
-            days_str = "1 day" if days == 1 else f"{days} days"
-            await ctx.reply(f"The last time Bill sent a new Steam game recommendation in {msg.channel.mention} was {days_str} ago\n{msg.jump_url}")
-            return
-    await ctx.reply(f"I can't remember the last time Bill recommended a game :(")
+    if not repo.contains('bill'):
+        await ctx.reply(f"I can't remember the last time Bill recommended a game :(")
+        return
+
+    data = repo.get('bill')
+    created_at = parser.parse(data['created_at'])
+    channel = data['channel']
+    jump_url = data['jump_url']
+
+    days_since = (now() - created_at).days
+    days_str = "1 day" if days_since == 1 else f"{days_since} days"
+    await ctx.reply(f"The last time Bill sent a new Steam game recommendation in {channel} was {days_str} ago\n{jump_url}")
 
 
 @bot.hybrid_command()
