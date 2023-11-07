@@ -33,7 +33,7 @@ async def on_message(msg: Message):
 
     # check if the message is a recommendation from bill
     #   ... if it is, store it!
-    if msg.author.id == user_ids['kevin']:
+    if msg.author.id == user_ids['bill']:
         if ("http://store.steampowered.com" in msg.content) or\
                 ("https://store.steampowered.com" in msg.content):
             repo.put('bill', {
